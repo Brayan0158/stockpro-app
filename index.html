@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-900">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockPro - Gestión de Inventario</title>
+  <!-- Tailwind CSS CDN para estilos profesionales instantáneos -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="h-full font-sans text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+
+  <div class="min-h-full flex flex-col">
+    <!-- Navbar -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-500/30">
+            <i data-lucide="package-search" class="w-6 h-6 text-white"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-lg leading-none text-white">StockPro</h1>
+            <span class="text-xs text-slate-400">Control de Productos</span>
+          </div>
+        </div>
+        <button onclick="abrirModal()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>Nuevo Producto</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      
+      <!-- Metrics KPI -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-slate-800/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
+          <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl">
+            <i data-lucide="boxes" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-400">Total Productos</p>
+            <p id="kpi-total" class="text-2xl font-bold text-white">0</p>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
+          <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
+            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-400">Stock Crítico (≤ 3)</p>
+            <p id="kpi-critico" class="text-2xl font-bold text-amber-400">0</p>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
+          <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+            <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-400">Valor del Inventario</p>
+            <p id="kpi-valor" class="text-2xl font-bold text-emerald-400">$0.00</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls & Search -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-800/30 p-4 rounded-2xl border border-slate-800">
+        <div class="relative w-full sm:w-80">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input type="text" id="input-buscar" oninput="filtrarProductos()" placeholder="Buscar producto..." class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 text-slate-200 text-sm rounded-xl pl-9 pr-4 py-2.5 outline-none transition-colors">
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <label class="text-xs text-slate-400 font-medium">Categoría:</label>
+          <select id="select-categoria" onchange="filtrarProductos()" class="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-xl px-3 py-2.5 outline-none focus:border-indigo-500 w-full sm:w-auto">
+            <option value="Todas">Todas</option>
+            <option value="Electrónica">Electrónica</option>
+            <option value="Ropa">Ropa</option>
+            <option value="Hogar">Hogar</option>
+            <option value="Accesorios">Accesorios</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table / Cards -->
+      <div class="bg-slate-800/40 border border-slate-800 rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-800/80 text-slate-400 text-xs uppercase font-semibold">
+              <tr>
+                <th class="px-6 py-4">Producto</th>
+                <th class="px-6 py-4">Categoría</th>
+                <th class="px-6 py-4">Precio</th>
+                <th class="px-6 py-4">Stock</th>
+                <th class="px-6 py-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-productos" class="divide-y divide-slate-800/60 font-normal">
+              <!-- Render dinámico desde JS -->
+            </tbody>
+          </table>
+        </div>
+        <div id="sin-resultados" class="hidden py-12 text-center text-slate-500">
+          <i data-lucide="package-x" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+          <p>No se encontraron productos registrados.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Form -->
+  <div id="modal-producto" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center">
+        <h2 id="modal-titulo" class="font-bold text-lg text-white">Nuevo Producto</h2>
+        <button onclick="cerrarModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <form id="form-producto" onsubmit="guardarProducto(event)" class="p-6 space-y-4">
+        <input type="hidden" id="prod-id">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Nombre</label>
+          <input type="text" id="prod-nombre" required class="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Categoría</label>
+          <select id="prod-categoria" class="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none">
+            <option value="Electrónica">Electrónica</option>
+            <option value="Ropa">Ropa</option>
+            <option value="Hogar">Hogar</option>
+            <option value="Accesorios">Accesorios</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Precio ($)</label>
+            <input type="number" step="0.01" min="0" id="prod-precio" required class="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Stock</label>
+            <input type="number" min="0" id="prod-stock" required class="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 outline-none">
+          </div>
+        </div>
+        <div class="pt-4 flex gap-3">
+          <button type="button" onclick="cerrarModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-sm transition-colors">Cancelar</button>
+          <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors shadow-lg shadow-indigo-600/30">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Datos de prueba iniciales
+    let productos = [
+      { id: '1', nombre: 'MacBook Air M2', categoria: 'Electrónica', precio: 1199.99, stock: 8 },
+      { id: '2', nombre: 'Audífonos Noise Cancelling', categoria: 'Electrónica', precio: 299.50, stock: 2 },
+      { id: '3', nombre: 'Camiseta Algodón Premium', categoria: 'Ropa', precio: 25.00, stock: 45 },
+      { id: '4', nombre: 'Lámpara Led Inteligente', categoria: 'Hogar', precio: 45.90, stock: 1 }
+    ];
+
+    function renderTabla(lista = productos) {
+      const tbody = document.getElementById('tabla-productos');
+      const noResultados = document.getElementById('sin-resultados');
+      tbody.innerHTML = '';
+
+      if (lista.length === 0) {
+        noResultados.classList.remove('hidden');
+      } else {
+        noResultados.classList.add('hidden');
+        lista.forEach(p => {
+          const esCritico = p.stock <= 3;
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-800/30 transition-colors";
+          tr.innerHTML = `
+            <td class="px-6 py-4 font-semibold text-white">${p.nombre}</td>
+            <td class="px-6 py-4 text-slate-400">${p.categoria}</td>
+            <td class="px-6 py-4 text-slate-200 font-mono">$${p.precio.toFixed(2)}</td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${esCritico ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}">
+                <span class="w-1.5 h-1.5 rounded-full ${esCritico ? 'bg-red-400 animate-pulse' : 'bg-emerald-400'}"></span>
+                ${p.stock} unidades
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right space-x-2">
+              <button onclick="editarProducto('${p.id}')" class="p-2 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+              <button onclick="eliminarProducto('${p.id}')" class="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+      lucide.createIcons();
+      actualizarKPIs();
+    }
+
+    function actualizarKPIs() {
+      const total = productos.length;
+      const criticos = productos.filter(p => p.stock <= 3).length;
+      const valorTotal = productos.reduce((acc, p) => acc + (p.precio * p.stock), 0);
+
+      document.getElementById('kpi-total').textContent = total;
+      document.getElementById('kpi-critico').textContent = criticos;
+      document.getElementById('kpi-valor').textContent = '$' + valorTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function filtrarProductos() {
+      const busqueda = document.getElementById('input-buscar').value.toLowerCase();
+      const categoria = document.getElementById('select-categoria').value;
+
+      const filtrados = productos.filter(p => {
+        const coincideNombre = p.nombre.toLowerCase().includes(busqueda);
+        const coincideCat = categoria === 'Todas' || p.categoria === categoria;
+        return coincideNombre && coincideCat;
+      });
+
+      renderTabla(filtrados);
+    }
+
+    function abrirModal(producto = null) {
+      const modal = document.getElementById('modal-producto');
+      const titulo = document.getElementById('modal-titulo');
+      
+      if (producto) {
+        titulo.textContent = "Editar Producto";
+        document.getElementById('prod-id').value = producto.id;
+        document.getElementById('prod-nombre').value = producto.nombre;
+        document.getElementById('prod-categoria').value = producto.categoria;
+        document.getElementById('prod-precio').value = producto.precio;
+        document.getElementById('prod-stock').value = producto.stock;
+      } else {
+        titulo.textContent = "Nuevo Producto";
+        document.getElementById('form-producto').reset();
+        document.getElementById('prod-id').value = '';
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal-producto').classList.add('hidden');
+    }
+
+    function guardarProducto(e) {
+      e.preventDefault();
+      const id = document.getElementById('prod-id').value;
+      const nombre = document.getElementById('prod-nombre').value;
+      const categoria = document.getElementById('prod-categoria').value;
+      const precio = parseFloat(document.getElementById('prod-precio').value);
+      const stock = parseInt(document.getElementById('prod-stock').value);
+
+      if (id) {
+        const idx = productos.findIndex(p => p.id === id);
+        if (idx !== -1) productos[idx] = { id, nombre, categoria, precio, stock };
+      } else {
+        productos.push({ id: Date.now().toString(), nombre, categoria, precio, stock });
+      }
+
+      cerrarModal();
+      filtrarProductos();
+    }
+
+    function editarProducto(id) {
+      const prod = productos.find(p => p.id === id);
+      if (prod) abrirModal(prod);
+    }
+
+    function eliminarProducto(id) {
+      if (confirm('¿Deseas borrar este producto del inventario?')) {
+        productos = productos.filter(p => p.id !== id);
+        filtrarProductos();
+      }
+    }
+
+    // Inicializar app
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTabla();
+    });
+  </script>
+</body>
+</html>
